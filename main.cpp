@@ -30,7 +30,5 @@ int main (int argc, char *agrv[]){
         }
     }
 
-    printTree(t);
-
     return 0;
 }

@@ -4,25 +4,28 @@
 #include <string.h>
 #include <stdio.h>
 
-int strcomp (char* word, char* cont, int start=0){
-    // Se retornar 0 as palavras já começam diferentes
-    // Se retornar tamanho de word 
+int strcomp (char* word, char* cont){
     int i;
-    for (i = start; i < strlen(word) && i < strlen(cont); i++)
-        if (word[i] != cont[i-start])
+
+    for (i = 0; i < strlen(word) && i < strlen(cont); i++)
+        if (word[i] != cont[i])
             return i;
     return i;
 }
 
 char* substring (char* w, int start, int end){
-    if (start >= end || w == NULL) return NULL;
+    if (start > end || w == NULL) return NULL;
+    if (start == end) return "";
 
-    char* r = (char*) malloc(sizeof(char) * (end-start));
+    char* temp = (char*) malloc(end-start);
+    char r [end-start];
 
     for (int i = start; i < end && i < strlen(w); i++)
         r[i-start] = w[i];
 
-    return r;
+    strcpy(temp,r);
+
+    return temp;
 }
 
 Tree createTree(char* content){
@@ -38,7 +41,8 @@ Tree createTree(char* content){
     return root;
 }
 
-Tree insertTree (Tree t, char *w, int start){
+Tree insertTree (Tree t, char *w){
+
     // Tree is empty or node is leaf
     if (t->fwd < 0 && t->content == NULL){
         t->content = (char*) malloc(sizeof(w));
@@ -46,7 +50,9 @@ Tree insertTree (Tree t, char *w, int start){
         return t;
     }
 
-    int fwd = strcomp(w, t->content, start);
+    if (buscaTree(t,w)) return t;
+
+    int fwd = strcomp(w, t->content);
 
     // Inserir num nó não folha
     if (t->fwd >= 0){
@@ -77,29 +83,35 @@ Tree insertTree (Tree t, char *w, int start){
 
     t->fwd = fwd;
     t->cmp = w[fwd];
-    t->content = substring(w, start, fwd);
+    t->content = substring(w, 0, fwd);
     return t;
 }
 
-bool buscaTree(Tree t, char* w, int pos){
-    if (t->fwd >= 0){
-        if (w[t->fwd + pos] == t->cmp)
-            return buscaTree(t->right, w, t->fwd);
+bool buscaTree(Tree t, char* word, int pos){
+    if (t == NULL) return false;
+
+    int fwd = strcomp(word, t->content);
+
+    // if (fwd < 0 && t->content[0] == '\0') return true;
+    if (fwd < t->fwd && t->fwd >= 0) return false;
+
+    else if (fwd >= t->fwd && t->fwd >= 0){
+        if (word[t->fwd] == t->cmp)
+            return buscaTree(t->left, substring(word,fwd,strlen(word)));
         else
-            return buscaTree(t->left, w, t->fwd);
-    } else { // Folha
-        return strcmp(t->content,w) == 0;
-    }
+            return buscaTree(t->right, substring(word,fwd,strlen(word)));
+    } 
+
+    else if (t->fwd < 0) // Folha
+        return strcmp(word,t->content) == 0;
+
+    return false;
 }
 
 void printTree (Tree t){
-    printf("\t%s\n", t->content);
-    if (t->left != NULL){
-        // printf("Left->");
+    printf(" %s\n", t->content);
+    if (t->left != NULL)
         printTree(t->left);
-    }
-    if (t->right != NULL){
-        // printf("\tRight->");
+    if (t->right != NULL)
         printTree(t->right);
-    }
 }
