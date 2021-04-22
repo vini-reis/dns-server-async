@@ -69,9 +69,10 @@ Tree insertTree (Tree t, char *w){
     if (t->fwd >= 0){
         if (t->fwd <= fwd){ // Verifica se as palavras se diferem depois da posição de comparação
             if (w[t->fwd] == t->cmp)
-                insertTree(t->left,substring(w,t->fwd,strlen(w)));
+                t->left = insertTree(t->left,substring(w,t->fwd,strlen(w)));
             else
-                insertTree(t->right,substring(w,t->fwd,strlen(w)));
+                t->right = insertTree(t->right,substring(w,t->fwd,strlen(w)));
+            return t;
         }
          else {
             Tree new_node = createTree(NULL);
@@ -92,7 +93,7 @@ Tree insertTree (Tree t, char *w){
         insertTree(t->right, substring(t->content,fwd,strlen(t->content)));
     } 
 
-    t->fwd = fwd; // FIXME: Exemplo: roma, romulo, romanoff com caracteres de controle com problema
+    t->fwd = fwd;
     t->cmp = w[fwd];
     t->content = substring(w, 0, fwd);
     return t;
