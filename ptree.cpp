@@ -17,15 +17,26 @@ char* substring (char* w, int start, int end){
     if (start > end || w == NULL) return NULL;
     if (start == end) return "";
 
-    char* temp = (char*) malloc(end-start);
-    char r [end-start];
+    char* r = (char*) malloc(end-start);
 
     for (int i = start; i < end && i < strlen(w); i++)
         r[i-start] = w[i];
 
-    strcpy(temp,r);
+    return r;
+}
 
-    return temp;
+char* concat (char* s1, char* s2){
+    if (s1 == NULL && s2 == NULL) return NULL;
+
+    int size = strlen(s1) + strlen(s2);
+    char* r = (char*) malloc(sizeof(size));
+
+    for (int i = 0; i < strlen(s1); i++)
+        r[i] = s1[i];
+    for (int i = strlen(s1); i < size; i++)
+        r[i] = s2[i-strlen(s1)];
+
+    return r;
 }
 
 Tree createTree(char* content){
@@ -81,13 +92,13 @@ Tree insertTree (Tree t, char *w){
         insertTree(t->right, substring(t->content,fwd,strlen(t->content)));
     } 
 
-    t->fwd = fwd;
+    t->fwd = fwd; // FIXME: Exemplo: roma, romulo, romanoff com caracteres de controle com problema
     t->cmp = w[fwd];
     t->content = substring(w, 0, fwd);
     return t;
 }
 
-bool buscaTree(Tree t, char* word, int pos){
+bool buscaTree(Tree t, char* word){
     if (t == NULL) return false;
 
     int fwd = strcomp(word, t->content);
@@ -114,4 +125,47 @@ void printTree (Tree t){
         printTree(t->left);
     if (t->right != NULL)
         printTree(t->right);
+}
+
+bool searchNode(Node* t, char* w){
+    return strcmp(t->content,w) == 0;
+}
+
+bool deleteTree (Tree t, char* w){
+    if (!buscaTree(t, w)) return false;
+
+    int fwd = strcomp(w, t->content);
+
+    if (fwd >= t->fwd && t->fwd >= 0){
+        if (w[t->fwd] == t->cmp)
+            if (!searchNode(t->left, substring(w,fwd,strlen(w))))
+                return deleteTree(t->left, substring(w,fwd,strlen(w)));
+            else {
+                t->content = concat(t->content, t->right->content);
+                t->fwd += t->right->fwd; // FIXME: Se o nó filho for folha, estraga o valor do paii
+                free(t->left->content);
+                free(t->left);
+                t = t->right;
+                return true;
+            }
+        else {
+            if (!searchNode(t->right, substring(w,fwd,strlen(w))))
+                return deleteTree(t->right, substring(w,fwd,strlen(w)));
+            else {
+                t->content = concat(t->content, t->left->content);
+                t->fwd += t->left->fwd;
+                free(t->left->content);
+                free(t->left);
+                t->left = NULL;
+                return true;
+            }
+        }
+    } else if (searchNode(t,w)){
+        free(t->content);
+        t->content = NULL;
+        return true;
+    }
+
+    printf("Check!!!\n");
+    return false;
 }

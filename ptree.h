@@ -16,7 +16,8 @@ typedef Node* Tree;
 int strcomp(char* s1, char* s2);
 Tree createTree(char* content);
 Tree insertTree(Tree t, char* w);
-bool buscaTree(Tree t, char* w, int pos=0);
+bool buscaTree(Tree t, char* w);
 void printTree(Tree t);
+bool deleteTree(Tree t, char* w);
 
 #endif

@@ -24,6 +24,11 @@ int main (int argc, char *agrv[]){
                 if (buscaTree(t, word))
                     printf("Found it!\n");
             break;
+            case 'd':
+                printf("Please, enter the  word you want to delete: ");
+                scanf(" %s", word);
+                if (deleteTree(t, word)) printf("Deleted!\n");
+            break;
             case 'p':
                 printTree(t);
             break;
