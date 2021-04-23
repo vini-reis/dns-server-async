@@ -2,14 +2,16 @@
     "tasks": [
         {
             "type": "cppbuild",
-            "label": "C/C++: g++.exe build active file",
-            "command": "C:\\msys64\\mingw64\\bin\\g++.exe",
+            "label": "C/C++: g++-10 build active file",
+            "command": "/usr/bin/g++-10",
             "args": [
                 "-g",
-                "${file}",
+                "ptree.cpp",
                 "main.cpp",
                 "-o",
-                "${fileDirname}\\${fileBasenameNoExtension}.exe"
+                "${fileDirname}/ptree.cc",
+                "-lncurses",
+                "-lpthread"
             ],
             "options": {
                 "cwd": "${workspaceFolder}"
