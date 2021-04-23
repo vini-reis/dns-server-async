@@ -18,6 +18,6 @@ Tree createTree(char* content);
 Tree insertTree(Tree t, char* w);
 bool buscaTree(Tree t, char* w);
 void printTree(Tree t);
-bool deleteTree(Tree t, char* w);
+Tree deleteTree(Tree t, char* w);
 
 #endif

@@ -132,41 +132,47 @@ bool searchNode(Node* t, char* w){
     return strcmp(t->content,w) == 0;
 }
 
-bool deleteTree (Tree t, char* w){
-    if (!buscaTree(t, w)) return false;
+Tree deleteTree (Tree t, char* w){
+    if (!buscaTree(t, w)) return t;
 
     int fwd = strcomp(w, t->content);
 
     if (fwd >= t->fwd && t->fwd >= 0){
         if (w[t->fwd] == t->cmp)
-            if (!searchNode(t->left, substring(w,fwd,strlen(w))))
-                return deleteTree(t->left, substring(w,fwd,strlen(w)));
+            if (!searchNode(t->left, substring(w,fwd,strlen(w)))){
+                t->left = deleteTree(t->left, substring(w,fwd,strlen(w)));
+                return t;
+            }
             else {
-                t->content = concat(t->content, t->right->content);
-                t->fwd += t->right->fwd; // FIXME: Se o nó filho for folha, estraga o valor do paii
+                t->right->content = concat(t->content, t->right->content);
+                t->right->fwd = t->right->fwd < 0 ? -1 : t->right->fwd + t->fwd;
                 free(t->left->content);
                 free(t->left);
                 t = t->right;
-                return true;
             }
         else {
-            if (!searchNode(t->right, substring(w,fwd,strlen(w))))
-                return deleteTree(t->right, substring(w,fwd,strlen(w)));
+            if (!searchNode(t->right, substring(w,fwd,strlen(w)))){
+                t->right = deleteTree(t->right, substring(w,fwd,strlen(w)));
+                return t;
+            }
             else {
-                t->content = concat(t->content, t->left->content);
-                t->fwd += t->left->fwd;
-                free(t->left->content);
-                free(t->left);
-                t->left = NULL;
-                return true;
+                t->left->content = concat(t->content, t->left->content);
+                t->left->fwd = t->left->fwd < 0 ? -1 : t->left->fwd + t->fwd;
+                free(t->right->content);
+                free(t->right);
+                t = t->left;
             }
         }
+
+        printf("Deleted!\n");
+        return t;
     } else if (searchNode(t,w)){
         free(t->content);
         t->content = NULL;
-        return true;
+        printf("Deleted!\n");
+        return t;
     }
 
     printf("Check!!!\n");
-    return false;
+    return t;
 }

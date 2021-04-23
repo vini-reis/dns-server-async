@@ -27,7 +27,7 @@ int main (int argc, char *agrv[]){
             case 'd':
                 printf("Please, enter the  word you want to delete: ");
                 scanf(" %s", word);
-                if (deleteTree(t, word)) printf("Deleted!\n");
+                t = deleteTree(t, word);
             break;
             case 'p':
                 printTree(t);
