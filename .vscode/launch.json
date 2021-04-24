@@ -8,7 +8,7 @@
             "name": "g++-10 - Build and debug active file",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/ptree.cc",
+            "program": "${fileDirname}/ptree.cc",
             "args": [],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
