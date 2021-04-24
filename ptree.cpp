@@ -5,11 +5,11 @@
 #include <stdio.h>
 #include <pthread.h>
 
-int strcomp (char* word, char* cont){
+int strcomp (char* word, char* cont, int start=0){
     int i;
 
-    for (i = 0; i < strlen(word) && i < strlen(cont); i++)
-        if (word[i] != cont[i])
+    for (i = start; i < strlen(word) && i < strlen(cont); i++)
+        if (word[i] != cont[i-start])
             return i;
     return i;
 }
@@ -29,7 +29,12 @@ char* substring (char* w, int start, int end){
 char* concat (char* s1, char* s2){
     if (s1 == NULL && s2 == NULL) return NULL;
 
-    int size = strlen(s1) + strlen(s2);
+    int size;
+    if (s2 == NULL)
+        size = strlen(s1);
+    else 
+        size = strlen(s1) + strlen(s2);
+
     char* r = (char*) malloc(sizeof(size));
 
     for (int i = 0; i < strlen(s1); i++)
@@ -44,14 +49,14 @@ Tree createTree(char* content){
     Node* root = (Node*) malloc(sizeof(Node));
     root->content = NULL;
     if (content!=NULL){
-        // root->content = (char*) malloc(sizeof(content));
-        // strcpy(root->content,content);
-        root->content = content;
+        root->content = (char*) malloc(sizeof(content));
+        strcpy(root->content,content);
     }
     root->fwd = -1;
     root->cmp = '$';
     root->left = root->right = NULL;
     root->freq = 0;
+    free(content);
     return root;
 }
 
@@ -99,19 +104,19 @@ Tree insertTree (Tree t, char *w){
     t->fwd = fwd;
     t->cmp = w[fwd];
     t->content = substring(w, 0, fwd);
-    free(w);
+    // delete [] w;
     return t;
 }
 
-bool searchTree(Tree t, char* word){
+bool searchTree(Tree t, char* word, bool inc){
     if (t == NULL) return false;
 
     int fwd = strcomp(word, t->content);
 
     if (fwd < t->fwd && t->fwd >= 0) return false;
 
-    // FIXME: Incrementar a busca somente se o USUÁRIO buscar o nó
-    t->freq++; // Incrementa a frequência pois a busca passou por este nó
+    if (inc) t->freq++; // Incrementa a frequência pois a busca passou por este nó
+
     if (fwd >= t->fwd && t->fwd >= 0){
         if (word[t->fwd] == t->cmp){
             return searchTree(t->left, substring(word,fwd,strlen(word)));
@@ -198,31 +203,36 @@ void freeTree(Tree t){
 char* complete(Tree t, char* w){
     w = concat(w,t->content);
 
-    if (t->fwd < 0) return concat(w, t->content);
+    if (t->fwd < 0) return w;
 
     if (t->left->freq >= t->right->freq)
-        w = concat(w, complete(t->left,w)); 
+        w = complete(t->left,w); 
     else
-        w = concat(w, complete(t->right,w)); 
+        w = complete(t->right,w); 
     return w;
 }
 
 void* suggest(void* td){
-    dt* data = (dt*) td;
-    data->w = suggest(data->t, data->w);
+    data* d = (data*) td;
+    d->sugg = suggest(d->t, d->buffer);
+
+    d->sugg = d->sugg != NULL && searchTree(d->t, d->sugg)? d->sugg : NULL;
 
     pthread_exit(NULL);
 }
 
 char* suggest(Tree t, char* w, int start){
+    // FIXME: Resolver casos de sugestão...
     if (t == NULL) return NULL;
 
-    if (searchTree(t, w)) return w; // False para inc freq
+    if (searchTree(t, w)) return NULL; // False para inc freq
 
     // Busca em qual nó a palavra termina
-    int fwd = strcomp(w, t->content);
+    int fwd = strcomp(w, t->content, start);
 
-    if (fwd >= t->fwd){
+    if (fwd == 0 && t->fwd != 0 && start == 0 && t->content != NULL) return NULL;
+
+    if (start+t->fwd <= strlen(w)){
         t->freq++; // Incrementa a frequencia de busca
 
         if (w[start+t->fwd] == t->cmp)
@@ -231,10 +241,11 @@ char* suggest(Tree t, char* w, int start){
             w = suggest(t->right, w, start+t->fwd);
         return w;
     } else {
+        w = concat(w,substring(t->content,fwd-start,strlen(t->content)));
         if (t->left->freq >= t->right->freq)
-            w = concat(w, complete(t->left, w));
+            w = complete(t->left, w);
         else
-            w = concat(w, complete(t->right, w));
+            w = complete(t->right, w);
         return w;
     }
 }

@@ -1,38 +1,36 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <unistd.h>
 #include <string.h>
 #include <pthread.h>
-#include <ncurses.h>
+#include <termios.h>
 #include <fstream>
 
 #include "ptree.h"
 
-void* readInput(void* input){
-    char* in = (char*) input;
-    int i = strlen(in);
-
-    in[i] = getch();
-
-    pthread_exit(NULL);
-}
-
 using namespace std;
 int main (int argc, char *agrv[]){
-    char o, *input = (char*)malloc(sizeof(MAX_SEARCH_LENGTH));
+    char o, temp;
+    char *input = (char*)malloc(sizeof(MAX_SEARCH_LENGTH));
+    char *last = (char*)malloc(sizeof(MAX_SEARCH_LENGTH));
     Tree t = createTree(NULL);
-    pthread_t thread [2];
+    pthread_t thread;
     pthread_attr_t attr;
-    int rc;
+    int rc, idx;
     void *status;
     fstream file;
-    
-    dt* data = (dt*)malloc(sizeof(dt));
-    data->t = t;
-    data->w = input;
+    struct termios old_tio, new_tio;
+    bool finish = false;
+
+    data* d = (data*)malloc(sizeof(data));
+    d->t = t;
+    d->buffer = (char*)malloc(sizeof(MAX_SEARCH_LENGTH));;
+    d->sugg = (char*)malloc(sizeof(MAX_SEARCH_LENGTH));;
 
     while (o != 'e'){
         printf("Select an option: ");
         scanf(" %c", &o); 
+        getchar();
         switch (o){
             case 'i':
                 printf("Please, enter the word for input: ");
@@ -43,7 +41,7 @@ int main (int argc, char *agrv[]){
             case 'b':
                 printf("Please, enter the word to look for: ");
                 scanf(" %s", input);
-                if (searchTree(t, input))
+                if (searchTree(t, input, true))
                     printf("Found it!\n");
             break;
 
@@ -69,36 +67,85 @@ int main (int argc, char *agrv[]){
             break;
 
             case 't':
+                scanf(" %s", input);
+                printf("Você procura por '%s'?\n", suggest(t, input));
+            break;
 
+            case 'e':
+                
             break;
 
             case 's':
-                pthread_attr_init(&attr);
-                if (rc) printf("Error creating thread %d", rc);
-                pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
+                while(1){
+                    pthread_attr_init(&attr);
+                    pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
 
-                rc = pthread_create(&thread[0], &attr, readInput, (void*)input);
-                if (rc) printf("Error creating thread %d", rc);
+                    // Desliga o modo canonico do terminal 
+                    tcgetattr(STDIN_FILENO,&old_tio);
+                    new_tio=old_tio;
+                    new_tio.c_lflag &=(~ICANON & ~ECHO);
+                    tcsetattr(STDIN_FILENO,TCSANOW,&new_tio);
 
-                rc = pthread_create(&thread[1], &attr, suggest, (void*)data);
-                if (rc) printf("Error creating thread %d", rc);
+                    printf("Press [Enter] when you finish your search?\n");
 
-                pthread_attr_destroy(&attr);
+                    // d = (data*) malloc(sizeof(data));
+                    d->buffer = (char*) malloc(sizeof(MAX_SEARCH_LENGTH));
+                    d->sugg = (char*) malloc(sizeof(MAX_SEARCH_LENGTH));
+                    last = (char*) malloc(sizeof(MAX_SEARCH_LENGTH));
+                    idx = 0;
+                    finish = false;
 
-                rc = pthread_join(thread[0], &status);
-                if (rc) printf("Error joining thread %d", rc);
+                    while(!finish) {
+                        temp = (char) getchar();
+                        if (temp != '\n'){
+                            d->buffer[idx++] = temp;
+                            printf("%s\n", d->buffer);
 
-                rc = pthread_join(thread[1], &status);
-                if (rc) printf("Error joining thread %d", rc);
+                            rc = pthread_create(&(thread), &attr, suggest, (void*)d);
+                            if (rc) printf("Error creating thread, code: %d\n", rc);
 
+                            rc = pthread_join(thread, &status);
+                            if (rc) printf("Error joining thread, code: %d\n", rc); 
 
+                            if (d->sugg != NULL && strcmp(d->sugg,last) != 0){
+                                printf("\nAre you looking for '%s'? [y/n]\n", d->sugg);
+                                strcpy(last, d->sugg);
+                                if(((char)getchar()) == 'y') break;
+                            } 
+                        } else {
+                            if (!searchTree(t, d->buffer)){
+                                printf("I didn't find '%s' in the tree. Do you wanna add it? ([y]/n)\n\n", d->buffer);
+                                temp = (char)getchar();
+                                if (temp == 'y' || temp == '\n')
+                                    t = insertTree(t, d->buffer);
+                                finish = true;
+                            }
+                        }
+                        
+                    }
+
+                    free(d->sugg);
+                    // d->sugg = NULL;
+                    free(d->buffer);
+                    // free(d);
+                    // d->buffer = NULL;
+                    free(last);
+                    // last = NULL;
+
+                    tcsetattr(STDIN_FILENO,TCSANOW,&old_tio);
+
+                    pthread_attr_destroy(&attr);
+                }
             break;
         }
     }
 
-    freeTree(t);
     delete [] input;
-    free(data);
+    delete [] last;
+    free(d->buffer);
+    free(d->sugg);
+    free(d);
+    freeTree(t);
 
     return 0;
 }

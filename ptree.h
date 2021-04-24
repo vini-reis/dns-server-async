@@ -15,15 +15,16 @@ struct Node
 
 typedef Node* Tree;
 
-struct dt {
+struct data {
     Tree t;
-    char* w;
+    char* buffer;
+    char* sugg;
 };
 
 
 Tree createTree(char* content);
 Tree insertTree(Tree t, char* w);
-bool searchTree(Tree t, char* w);
+bool searchTree(Tree t, char* w, bool inc=false);
 void printTree(Tree t);
 Tree deleteTree(Tree t, char* w);
 void freeTree(Tree t);
