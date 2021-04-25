@@ -15,13 +15,6 @@ struct Node
 
 typedef Node* Tree;
 
-struct data {
-    Tree t;
-    char* buffer;
-    char* sugg;
-};
-
-
 Tree createTree(char* content);
 Tree insertTree(Tree t, char* w);
 bool searchTree(Tree t, char* w, bool inc=false);

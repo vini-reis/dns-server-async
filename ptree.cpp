@@ -1,49 +1,10 @@
-#include "ptree.h"
-
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
 #include <pthread.h>
 
-int strcomp (char* word, char* cont, int start=0){
-    int i;
-
-    for (i = start; i < strlen(word) && i < strlen(cont); i++)
-        if (word[i] != cont[i-start])
-            return i;
-    return i;
-}
-
-char* substring (char* w, int start, int end){
-    if (start > end || w == NULL) return NULL;
-    char* r = (char*) malloc(end-start+1);
-    int i = 0;
-
-    for (i = start; i < end && i < strlen(w); i++)
-        r[i-start] = w[i];
-    r[i] = '\0';
-
-    return r;
-}
-
-char* concat (char* s1, char* s2){
-    if (s1 == NULL && s2 == NULL) return NULL;
-
-    int size;
-    if (s2 == NULL)
-        size = strlen(s1);
-    else 
-        size = strlen(s1) + strlen(s2);
-
-    char* r = (char*) malloc(sizeof(size));
-
-    for (int i = 0; i < strlen(s1); i++)
-        r[i] = s1[i];
-    for (int i = strlen(s1); i < size; i++)
-        r[i] = s2[i-strlen(s1)];
-
-    return r;
-}
+#include "ptree.h"
+#include "utils.h"
 
 Tree createTree(char* content){
     Node* root = (Node*) malloc(sizeof(Node));
@@ -62,7 +23,7 @@ Tree createTree(char* content){
 
 Tree insertTree (Tree t, char *w){
 
-    // Tree is empty or node is leaf
+    // Árvore é vazia ou o nó é folha
     if (t->fwd < 0 && t->content == NULL){
         t->content = (char*) malloc(sizeof(w));
         strcpy(t->content,w);
@@ -194,9 +155,9 @@ Tree deleteTree (Tree t, char* w){
 void freeTree(Tree t){
     if (t->left != NULL) freeTree(t->left);
     if (t->right != NULL) freeTree(t->right);
-    // free(t->content);
-    if (t->content != NULL)
-        delete [] t->content;
+    t->content = NULL;
+    free(t->content);
+    t = NULL;
     free(t);
 }
 
@@ -222,10 +183,9 @@ void* suggest(void* td){
 }
 
 char* suggest(Tree t, char* w, int start){
-    // FIXME: Resolver casos de sugestão...
     if (t == NULL) return NULL;
 
-    if (searchTree(t, w)) return NULL; // False para inc freq
+    if (searchTree(t, w)) return NULL; 
 
     // Busca em qual nó a palavra termina
     int fwd = strcomp(w, t->content, start);
@@ -233,7 +193,7 @@ char* suggest(Tree t, char* w, int start){
     if (fwd == 0 && t->fwd != 0 && start == 0 && t->content != NULL) return NULL;
 
     if (start+t->fwd <= strlen(w)){
-        t->freq++; // Incrementa a frequencia de busca
+        t->freq++;
 
         if (w[start+t->fwd] == t->cmp)
             w = suggest(t->left, w, start+t->fwd);
