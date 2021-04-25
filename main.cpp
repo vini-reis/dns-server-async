@@ -89,10 +89,10 @@ int main (int argc, char *agrv[]){
                     printf("Press [Enter] when you finish your search?\n");
 
                     // d = (data*) malloc(sizeof(data));
-                    d->buffer = (char*) malloc(sizeof(MAX_SEARCH_LENGTH));
-                    d->sugg = (char*) malloc(sizeof(MAX_SEARCH_LENGTH));
-                    last = (char*) malloc(sizeof(MAX_SEARCH_LENGTH));
                     idx = 0;
+                    // d->buffer[idx] = '\0';
+                    // d->sugg[idx] = '\0';
+                    // last[idx] = '\0';
                     finish = false;
 
                     while(!finish) {
@@ -121,16 +121,22 @@ int main (int argc, char *agrv[]){
                                 finish = true;
                             }
                         }
-                        
+
                     }
 
-                    free(d->sugg);
-                    // d->sugg = NULL;
-                    free(d->buffer);
-                    // free(d);
-                    // d->buffer = NULL;
-                    free(last);
+                    // free(d->sugg);
+                    // // d->sugg = NULL;
+                    // free(d->buffer);
+                    // // free(d);
+                    // // d->buffer = NULL;
+                    // free(last);
                     // last = NULL;
+                    if (d->buffer != NULL)
+                        memset(d->buffer, 0, sizeof(d->buffer));
+                    if (d->sugg != NULL)
+                        memset(d->sugg, 0, sizeof(d->sugg));
+                    if (last != NULL)
+                        memset(last, 0, sizeof(last));
 
                     tcsetattr(STDIN_FILENO,TCSANOW,&old_tio);
 
