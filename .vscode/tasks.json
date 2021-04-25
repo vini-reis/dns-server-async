@@ -8,6 +8,7 @@
                 "-g",
                 "ptree.cpp",
                 "main.cpp",
+                "utils.cpp",
                 "-o",
                 "${fileDirname}/ptree.cc",
                 "-lpthread"
